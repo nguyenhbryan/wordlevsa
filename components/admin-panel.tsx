@@ -8,7 +8,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 type WordRow = { id: number; word: string; starts_on: string; created_at: string; plays: number; wins: number };
 type ScoreRow = { id: number; player_name: string; guesses: number; won: number; duration_seconds: number; completed_at: string; word: string; starts_on: string };
-type AdminData = { words: WordRow[]; scores: ScoreRow[] };
+type AverageLeader = { player_name: string; average_guesses: number; wins: number };
+type CompletionLeader = { player_name: string; completed: number; wins: number };
+type AdminData = {
+  words: WordRow[];
+  scores: ScoreRow[];
+  averageLeaderboard: AverageLeader[];
+  completionLeaderboard: CompletionLeader[];
+};
+
+const emptyData: AdminData = {
+  words: [],
+  scores: [],
+  averageLeaderboard: [],
+  completionLeaderboard: [],
+};
 
 function defaultMonday(words: WordRow[]) {
   const today = new Date(); const day = today.getUTCDay() || 7; today.setUTCDate(today.getUTCDate() - day + 8); today.setUTCHours(0, 0, 0, 0);
@@ -19,7 +33,7 @@ function defaultMonday(words: WordRow[]) {
 
 export function AdminPanel() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
-  const [code, setCode] = useState(""); const [data, setData] = useState<AdminData>({ words: [], scores: [] });
+  const [code, setCode] = useState(""); const [data, setData] = useState<AdminData>(emptyData);
   const [word, setWord] = useState(""); const [startsOn, setStartsOn] = useState(""); const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -29,7 +43,7 @@ export function AdminPanel() {
   useEffect(() => { void load(); }, [load]);
 
   const signIn = async (event: React.FormEvent) => { event.preventDefault(); setBusy(true); try { const response = await fetch("/api/admin/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code }) }); const payload = await response.json(); if (!response.ok) throw new Error(payload.error); setCode(""); await load(); toast.success("Admin access unlocked."); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Couldn’t sign in."); } finally { setBusy(false); } };
-  const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); setAuthenticated(false); setData({ words: [], scores: [] }); };
+  const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); setAuthenticated(false); setData(emptyData); };
   const createWord = async (event: React.FormEvent) => { event.preventDefault(); setBusy(true); try { const response = await fetch("/api/admin/words", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ word, startsOn }) }); const payload = await response.json(); if (!response.ok) throw new Error(payload.error); setWord(""); await load(); toast.success(`Puzzle for ${startsOn} scheduled.`); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Puzzle not created."); } finally { setBusy(false); } };
 
   const totals = useMemo(() => { const plays = data.words.reduce((sum, item) => sum + Number(item.plays), 0); const wins = data.words.reduce((sum, item) => sum + Number(item.wins), 0); return { plays, wins, rate: plays ? Math.round((wins / plays) * 100) : 0 }; }, [data.words]);
@@ -50,7 +64,15 @@ export function AdminPanel() {
       <Tabs defaultValue="leaderboard" className="admin-tabs">
         <TabsList variant="line"><TabsTrigger value="leaderboard">Leaderboard</TabsTrigger><TabsTrigger value="schedule">Word schedule</TabsTrigger></TabsList>
         <TabsContent value="leaderboard">
-          <section className="admin-panel"><div className="panel-heading"><div><p className="eyebrow">PRIVATE</p><h2>Player results</h2></div><span>{data.scores.length} SUBMISSIONS</span></div>
+          <div className="leaderboard-grid">
+            <section className="admin-panel"><div className="panel-heading"><div><p className="eyebrow">EFFICIENCY</p><h2>Best average</h2></div><span>WINS ONLY</span></div>
+              {data.averageLeaderboard.length ? <Table><TableHeader><TableRow><TableHead>Rank</TableHead><TableHead>Player</TableHead><TableHead>Average</TableHead><TableHead>Wins</TableHead></TableRow></TableHeader><TableBody>{data.averageLeaderboard.map((player, index) => <TableRow key={player.player_name.toLowerCase()}><TableCell className="rank-cell">#{index + 1}</TableCell><TableCell className="player-cell">{player.player_name}</TableCell><TableCell><strong>{Number(player.average_guesses).toFixed(2)}</strong></TableCell><TableCell>{player.wins}</TableCell></TableRow>)}</TableBody></Table> : <div className="empty-state"><Trophy size={28} /><h3>No winning averages yet</h3><p>Players appear here after their first win.</p></div>}
+            </section>
+            <section className="admin-panel"><div className="panel-heading"><div><p className="eyebrow">CONSISTENCY</p><h2>Most completed</h2></div><span>ALL RESULTS</span></div>
+              {data.completionLeaderboard.length ? <Table><TableHeader><TableRow><TableHead>Rank</TableHead><TableHead>Player</TableHead><TableHead>Completed</TableHead><TableHead>Wins</TableHead></TableRow></TableHeader><TableBody>{data.completionLeaderboard.map((player, index) => <TableRow key={player.player_name.toLowerCase()}><TableCell className="rank-cell">#{index + 1}</TableCell><TableCell className="player-cell">{player.player_name}</TableCell><TableCell><strong>{player.completed}</strong></TableCell><TableCell>{player.wins}</TableCell></TableRow>)}</TableBody></Table> : <div className="empty-state"><Users size={28} /><h3>No completed games yet</h3><p>Every finished weekly puzzle counts once.</p></div>}
+            </section>
+          </div>
+          <section className="admin-panel results-log"><div className="panel-heading"><div><p className="eyebrow">PRIVATE</p><h2>Recent results</h2></div><span>{data.scores.length} SUBMISSIONS</span></div>
             {data.scores.length ? <Table><TableHeader><TableRow><TableHead>Player</TableHead><TableHead>Word</TableHead><TableHead>Result</TableHead><TableHead>Time</TableHead><TableHead>Finished</TableHead></TableRow></TableHeader><TableBody>{data.scores.map((score) => <TableRow key={score.id}><TableCell className="player-cell">{score.player_name}</TableCell><TableCell><span className="word-chip">{score.word}</span></TableCell><TableCell><span className={score.won ? "result-win" : "result-loss"}>{score.won ? `${score.guesses}/6` : "MISS"}</span></TableCell><TableCell>{score.duration_seconds < 60 ? `${score.duration_seconds}s` : `${Math.floor(score.duration_seconds / 60)}m ${score.duration_seconds % 60}s`}</TableCell><TableCell>{new Date(score.completed_at + (score.completed_at.endsWith("Z") ? "" : "Z")).toLocaleDateString()}</TableCell></TableRow>)}</TableBody></Table> : <div className="empty-state"><Trophy size={28} /><h3>No results yet</h3><p>Completed games will appear here with the player’s name.</p></div>}
           </section>
         </TabsContent>
