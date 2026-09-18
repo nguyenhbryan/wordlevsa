@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "Weekword — A fresh word every Monday",
+  title: "VSA @ UVA",
   description: "Solve the weekly five-letter puzzle and make the leaderboard.",
   icons: {
     icon: "/favicon.svg",

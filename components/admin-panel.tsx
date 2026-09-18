@@ -34,17 +34,17 @@ export function AdminPanel() {
 
   const totals = useMemo(() => { const plays = data.words.reduce((sum, item) => sum + Number(item.plays), 0); const wins = data.words.reduce((sum, item) => sum + Number(item.wins), 0); return { plays, wins, rate: plays ? Math.round((wins / plays) * 100) : 0 }; }, [data.words]);
 
-  if (authenticated === null) return <main className="admin-loading"><span className="logo-tile">W</span><p>Opening the press room…</p></main>;
+  if (authenticated === null) return <main className="admin-loading"><p>Opening the press room…</p></main>;
   if (!authenticated) return (
     <main className="admin-login-shell">
       <a className="back-link" href="/"><ArrowLeft size={16} /> Back to puzzle</a>
-      <section className="login-card"><span className="logo-tile">W</span><p className="eyebrow">PRIVATE ACCESS</p><h1>Admin press room</h1><p>Enter the access code to schedule words and see the private leaderboard.</p><form onSubmit={signIn}><label htmlFor="access-code">Access code</label><input id="access-code" type="password" value={code} onChange={(event) => setCode(event.target.value)} autoComplete="current-password" required autoFocus /><button type="submit" disabled={busy}>{busy ? "CHECKING…" : "UNLOCK ADMIN"}</button></form></section>
+      <section className="login-card"><p className="eyebrow">PRIVATE ACCESS</p><h1>Admin press room</h1><p>Enter the access code to schedule words and see the private leaderboard.</p><form onSubmit={signIn}><label htmlFor="access-code">Access code</label><input id="access-code" type="password" value={code} onChange={(event) => setCode(event.target.value)} autoComplete="current-password" required autoFocus /><button type="submit" disabled={busy}>{busy ? "CHECKING…" : "UNLOCK ADMIN"}</button></form></section>
     </main>
   );
 
   return (
     <main className="admin-shell">
-      <header className="admin-header"><a className="wordmark" href="/"><span className="logo-tile">W</span><span>WEEKWORD</span></a><div><span className="admin-badge">ADMIN</span><button className="text-button" type="button" onClick={logout}><LogOut size={15} /> Log out</button></div></header>
+      <header className="admin-header"><a className="wordmark" href="/"><span>VSA @ UVA</span></a><div><span className="admin-badge">ADMIN</span><button className="text-button" type="button" onClick={logout}><LogOut size={15} /> Log out</button></div></header>
       <section className="admin-intro"><div><p className="eyebrow">CONTROL DESK</p><h1>Weekly puzzle desk</h1><p>Schedule one five-letter word per week and review every submitted result.</p></div><a className="back-link" href="/"><ArrowLeft size={16} /> Play current puzzle</a></section>
       <section className="stats-grid"><article><Users size={20} /><span>PLAYS</span><strong>{totals.plays}</strong></article><article><Trophy size={20} /><span>WIN RATE</span><strong>{totals.rate}%</strong></article><article><CalendarPlus size={20} /><span>SCHEDULED</span><strong>{data.words.length}</strong></article></section>
       <Tabs defaultValue="leaderboard" className="admin-tabs">

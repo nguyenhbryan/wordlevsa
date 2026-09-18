@@ -10,10 +10,9 @@ button,input { font:inherit; } a { color:inherit; text-decoration:none; }
 .game-shell { width:min(100%,820px); margin:0 auto; padding:0 24px 32px; }
 .site-header { min-height:82px; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; border-bottom:3px solid #151515; }
 .wordmark { display:inline-flex; align-items:center; gap:10px; width:max-content; font-weight:900; font-size:1.24rem; letter-spacing:-.045em; }
-.logo-tile { display:grid; place-items:center; width:36px; height:36px; color:#fff; background:#1d4ed8; transform:rotate(-2deg); }
 .week-label { text-align:center; line-height:1.15; }
 .week-label span,.eyebrow,.puzzle-kicker { font-size:.75rem; font-weight:800; letter-spacing:.14em; }
-.week-label strong { display:block; margin-top:3px; font-size:.8rem; }
+.week-label strong { display:block; font-size:.8rem; }
 .icon-button { justify-self:end; display:grid; place-items:center; width:42px; height:42px; border:1.5px solid #151515; background:#fffefa; box-shadow:3px 3px 0 #151515; }
 .icon-button:hover { transform:translate(1px,1px); box-shadow:2px 2px 0 #151515; }
 .player-strip { display:flex; align-items:center; gap:12px; padding:18px 0; border-bottom:1px solid #a7a39a; }
@@ -63,7 +62,6 @@ footer { display:flex; justify-content:space-between; gap:16px; padding-top:18px
 .back-link { display:inline-flex; align-items:center; gap:6px; width:max-content; color:#56534d; font-size:.85rem; font-weight:700; }
 .back-link:hover { color:#1d4ed8; }
 .login-card { width:min(100%,440px); margin:11vh auto 0; padding:34px; border:2px solid #151515; background:#fffefa; box-shadow:8px 8px 0 #151515; }
-.login-card .logo-tile { margin-bottom:25px; }
 .login-card h1,.admin-intro h1 { margin:8px 0 12px; text-align:left; }
 .login-card > p:not(.eyebrow) { color:#6d6b65; line-height:1.55; }
 .login-card form { display:grid; gap:10px; margin-top:24px; }
