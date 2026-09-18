@@ -1,6 +1,10 @@
 import type { NextRequest } from "next/server";
 export const ADMIN_COOKIE = "weekword_admin"; const MAX_AGE = 60 * 60 * 24 * 7;
-function accessCode() { return process.env.ADMIN_ACCESS_CODE || "weekword-admin"; }
+function accessCode() {
+  const value = process.env.ADMIN_ACCESS_CODE;
+  if (!value) throw new Error("ADMIN_ACCESS_CODE is not configured.");
+  return value;
+}
 function toHex(bytes: ArrayBuffer) { return Array.from(new Uint8Array(bytes)).map((byte) => byte.toString(16).padStart(2, "0")).join(""); }
 async function signature(value: string) { const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(accessCode()), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]); return toHex(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value))); }
 export async function codesMatch(candidate: string) { const [a, b] = await Promise.all([signature(candidate), signature(accessCode())]); if (a.length !== b.length) return false; let difference = 0; for (let i = 0; i < a.length; i += 1) difference |= a.charCodeAt(i) ^ b.charCodeAt(i); return difference === 0; }

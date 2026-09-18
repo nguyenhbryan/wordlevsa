@@ -58,7 +58,7 @@ export function Game() {
     setDraftName(savedName);
     fetch("/api/puzzle")
       .then(async (response) => {
-        const data = await response.json();
+        const data = (await response.json()) as Puzzle & { error?: string };
         if (!response.ok) throw new Error(data.error);
         return data as Puzzle;
       })
@@ -114,7 +114,7 @@ export function Game() {
             durationSeconds: Math.round((Date.now() - startedAt) / 1000),
           }),
         });
-        const data = await response.json();
+        const data = (await response.json()) as { error?: string };
         if (!response.ok) throw new Error(data.error);
         setSaved(true);
         return true;
