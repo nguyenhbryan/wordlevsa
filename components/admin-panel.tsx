@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarPlus, LogOut, Trophy, Users } from "lucide-react";
+import { ArrowLeft, CalendarPlus, LogOut, Trash2, Trophy, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -35,6 +35,7 @@ export function AdminPanel() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [code, setCode] = useState(""); const [data, setData] = useState<AdminData>(emptyData);
   const [word, setWord] = useState(""); const [startsOn, setStartsOn] = useState(""); const [busy, setBusy] = useState(false);
+  const [deletingScoreId, setDeletingScoreId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try { const response = await fetch("/api/admin/data", { cache: "no-store" }); if (response.status === 401) { setAuthenticated(false); return; } const payload = await response.json() as AdminData & { error?: string }; if (!response.ok) throw new Error(payload.error); setData(payload); setAuthenticated(true); setStartsOn((value) => value || defaultMonday(payload.words)); }
@@ -45,6 +46,22 @@ export function AdminPanel() {
   const signIn = async (event: React.FormEvent) => { event.preventDefault(); setBusy(true); try { const response = await fetch("/api/admin/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code }) }); const payload = await response.json() as { error?: string }; if (!response.ok) throw new Error(payload.error); setCode(""); await load(); toast.success("Admin access unlocked."); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Couldn’t sign in."); } finally { setBusy(false); } };
   const logout = async () => { await fetch("/api/admin/logout", { method: "POST" }); setAuthenticated(false); setData(emptyData); };
   const createWord = async (event: React.FormEvent) => { event.preventDefault(); setBusy(true); try { const response = await fetch("/api/admin/words", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ word, startsOn }) }); const payload = await response.json() as { error?: string }; if (!response.ok) throw new Error(payload.error); setWord(""); await load(); toast.success(`Puzzle for ${startsOn} scheduled.`); } catch (reason) { toast.error(reason instanceof Error ? reason.message : "Puzzle not created."); } finally { setBusy(false); } };
+  const deleteSubmission = async (score: ScoreRow) => {
+    if (!window.confirm(`Delete ${score.player_name}’s submission for ${score.word}? This can’t be undone.`)) return;
+    setDeletingScoreId(score.id);
+    try {
+      const response = await fetch(`/api/admin/scores/${score.id}`, { method: "DELETE" });
+      const payload = await response.json() as { error?: string };
+      if (response.status === 401) { setAuthenticated(false); throw new Error(payload.error); }
+      if (!response.ok) throw new Error(payload.error);
+      await load();
+      toast.success("Submission deleted.");
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Submission not deleted.");
+    } finally {
+      setDeletingScoreId(null);
+    }
+  };
 
   const totals = useMemo(() => { const plays = data.words.reduce((sum, item) => sum + Number(item.plays), 0); const wins = data.words.reduce((sum, item) => sum + Number(item.wins), 0); return { plays, wins, rate: plays ? Math.round((wins / plays) * 100) : 0 }; }, [data.words]);
 
@@ -73,7 +90,7 @@ export function AdminPanel() {
             </section>
           </div>
           <section className="admin-panel results-log"><div className="panel-heading"><div><p className="eyebrow">PRIVATE</p><h2>Recent results</h2></div><span>{data.scores.length} SUBMISSIONS</span></div>
-            {data.scores.length ? <Table><TableHeader><TableRow><TableHead>Player</TableHead><TableHead>Word</TableHead><TableHead>Result</TableHead><TableHead>Time</TableHead><TableHead>Finished</TableHead></TableRow></TableHeader><TableBody>{data.scores.map((score) => <TableRow key={score.id}><TableCell className="player-cell">{score.player_name}</TableCell><TableCell><span className="word-chip">{score.word}</span></TableCell><TableCell><span className={score.won ? "result-win" : "result-loss"}>{score.won ? `${score.guesses}/6` : "MISS"}</span></TableCell><TableCell>{score.duration_seconds < 60 ? `${score.duration_seconds}s` : `${Math.floor(score.duration_seconds / 60)}m ${score.duration_seconds % 60}s`}</TableCell><TableCell>{new Date(score.completed_at + (score.completed_at.endsWith("Z") ? "" : "Z")).toLocaleDateString()}</TableCell></TableRow>)}</TableBody></Table> : <div className="empty-state"><Trophy size={28} /><h3>No results yet</h3><p>Completed games will appear here with the player’s name.</p></div>}
+            {data.scores.length ? <Table><TableHeader><TableRow><TableHead>Player</TableHead><TableHead>Word</TableHead><TableHead>Result</TableHead><TableHead>Time</TableHead><TableHead>Finished</TableHead><TableHead><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader><TableBody>{data.scores.map((score) => <TableRow key={score.id}><TableCell className="player-cell">{score.player_name}</TableCell><TableCell><span className="word-chip">{score.word}</span></TableCell><TableCell><span className={score.won ? "result-win" : "result-loss"}>{score.won ? `${score.guesses}/6` : "MISS"}</span></TableCell><TableCell>{score.duration_seconds < 60 ? `${score.duration_seconds}s` : `${Math.floor(score.duration_seconds / 60)}m ${score.duration_seconds % 60}s`}</TableCell><TableCell>{new Date(score.completed_at + (score.completed_at.endsWith("Z") ? "" : "Z")).toLocaleDateString()}</TableCell><TableCell className="submission-actions"><button className="trash-button" type="button" aria-label={`Delete ${score.player_name}’s submission`} title="Delete submission" disabled={deletingScoreId !== null} onClick={() => void deleteSubmission(score)}><Trash2 size={17} aria-hidden="true" /></button></TableCell></TableRow>)}</TableBody></Table> : <div className="empty-state"><Trophy size={28} /><h3>No results yet</h3><p>Completed games will appear here with the player’s name.</p></div>}
           </section>
         </TabsContent>
         <TabsContent value="schedule">

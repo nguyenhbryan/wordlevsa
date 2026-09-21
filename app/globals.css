@@ -91,6 +91,11 @@ footer { display:flex; justify-content:space-between; gap:16px; padding-top:18px
 .leaderboard-grid [data-slot="table-head"],.leaderboard-grid [data-slot="table-cell"] { padding-inline:12px; }
 .rank-cell { width:58px; color:#6d6b65; font-family:ui-monospace,monospace; font-weight:900; }
 .results-log { overflow:hidden; }
+.submission-actions { width:58px; text-align:right; }
+.trash-button { display:inline-grid; place-items:center; width:34px; height:34px; border:1px solid transparent; background:transparent; color:#8b2119; cursor:pointer; }
+.trash-button:hover { border-color:#c9362b; background:#f3dddd; }
+.trash-button:focus-visible { outline:2px solid #1d4ed8; outline-offset:2px; }
+.trash-button:disabled { opacity:.45; cursor:wait; }
 .player-cell { font-weight:800; }
 .word-chip { padding:5px 8px; background:#e8e5dc; font-family:ui-monospace,monospace; font-weight:900; letter-spacing:.1em; }
 .result-win,.result-loss { display:inline-block; min-width:48px; padding:5px 8px; text-align:center; font-size:.72rem; font-weight:900; }

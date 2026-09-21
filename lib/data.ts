@@ -170,3 +170,12 @@ export async function createWeeklyWord(word: string, startsOn: string) {
     VALUES (${word}, ${startsOn})
   `;
 }
+
+export async function deleteScore(id: number) {
+  const rows = await database()`
+    DELETE FROM scores
+    WHERE id = ${id}
+    RETURNING id
+  `;
+  return rows.length > 0;
+}
