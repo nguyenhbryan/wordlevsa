@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Delete, Settings } from "lucide-react";
+import { ArrowLeft, Delete, Settings, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -36,6 +36,11 @@ const priority: Record<LetterState, number> = {
   present: 2,
   correct: 3,
 };
+const shareSquares: Record<LetterState, string> = {
+  absent: "⬛",
+  present: "🟨",
+  correct: "🟩",
+};
 
 export function Game() {
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
@@ -51,6 +56,7 @@ export function Game() {
   const [resultOpen, setResultOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [manualShareText, setManualShareText] = useState("");
 
   useEffect(() => {
     const savedName = localStorage.getItem("weekword-name") || "";
@@ -214,7 +220,10 @@ export function Game() {
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement)?.tagName === "INPUT") return;
+      if (
+        event.target instanceof Element &&
+        event.target.closest("input, textarea, button, a, [contenteditable]")
+      ) return;
       const key = event.key.toUpperCase();
       if (
         /^[A-Z]$/.test(key) ||
@@ -339,6 +348,38 @@ export function Game() {
       toast.success("Your result is on the admin leaderboard.");
   };
 
+  const shareResult = async () => {
+    if (!puzzle || !finished) return;
+    const text = [
+      `VSA @ UVA Wordle #${puzzle.number} ${won ? guesses.length : "X"}/6`,
+      puzzle.weekLabel,
+      "",
+      ...guesses.map((guess) =>
+        guess.states.map((state) => shareSquares[state]).join(""),
+      ),
+      "",
+      new URL("/", window.location.href).toString(),
+    ].join("\n");
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch (reason) {
+        if (reason instanceof Error && reason.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setManualShareText("");
+      toast.success("Result copied. Paste it anywhere to share.");
+    } catch {
+      setManualShareText(text);
+      toast.info("Select and copy your result below.");
+    }
+  };
+
   return (
     <main className="game-shell">
       <header className="site-header">
@@ -439,6 +480,15 @@ export function Game() {
                 </button>
               </div>
             </div>
+            {finished && (
+              <button
+                className="view-result-button"
+                type="button"
+                onClick={() => setResultOpen(true)}
+              >
+                View result and share
+              </button>
+            )}
           </>
         )}
       </section>
@@ -465,6 +515,18 @@ export function Game() {
               </div>
             ))}
           </div>
+          <button className="share-result-button" type="button" onClick={() => void shareResult()}>
+            <Share2 size={17} aria-hidden="true" /> Share result
+          </button>
+          {manualShareText && (
+            <textarea
+              className="share-result-text"
+              aria-label="Your shareable result"
+              readOnly
+              value={manualShareText}
+              onFocus={(event) => event.currentTarget.select()}
+            />
+          )}
           {!saved ? (
             <div className="result-form">
               <label htmlFor="result-name">Name for the leaderboard</label>

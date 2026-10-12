@@ -48,6 +48,11 @@ footer { display:flex; justify-content:space-between; gap:16px; padding-top:18px
 .mini-result div { display:flex; gap:4px; }
 .mini-result span { width:18px; height:18px; background:#6d6b65; }
 .mini-result .correct { background:#247a4b; }.mini-result .present { background:#e2bd36; }.mini-result .absent { background:#6d6b65; }
+.share-result-button,.view-result-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:46px; padding:10px 18px; border:0; background:#151515; color:#fff; font-weight:900; letter-spacing:.04em; cursor:pointer; }
+.share-result-button { width:100%; }
+.share-result-button:hover,.view-result-button:hover { background:#303030; }
+.view-result-button { margin-top:24px; }
+.share-result-text { width:100%; min-height:165px; padding:12px; border:1.5px solid #151515; background:#fffefa; font: .9rem/1.5 ui-monospace,monospace; resize:vertical; }
 .result-form { display:grid; gap:8px; padding-top:8px; border-top:1px solid #d4d0c5; }
 .result-form label,.login-card label,.create-panel label { font-size:.75rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .result-form input,.login-card input,.create-panel input { width:100%; padding:12px; border:1.5px solid #151515; background:#fffefa; outline:none; }
